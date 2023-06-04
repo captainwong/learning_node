@@ -1,0 +1,29 @@
+
+1. enable remote access
+vi /etc/mysql/mysql.conf.d/mysqld.conf
+
+change `bind-address = 127.0.0.1` to `bind-address = 0.0.0.0` to allow remote access
+
+2. create remote accessible user
+
+mysql -uroot -p
+create user 'root'@'%' identified by 'password';
+grant all privileges on *.* to 'root'@'%';
+flush privileges;
+
+3. create database and table
+
+mysql -uroot -p
+create database test;
+use test;
+create table pets (
+    id varchar(50) not null,
+    name varchar(100) not null,
+    gender bool not null,
+    birth varchar(10) not null,
+    createdAt bigint not null,
+    updatedAt bigint not null,
+    version bigint not null,
+    primary key (id)
+) engine=innodb;
+

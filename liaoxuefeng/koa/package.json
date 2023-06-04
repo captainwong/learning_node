@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "koa": "^2.14.2"
+  },
+  "scripts": {
+    "start": "node --trace-deprecation app.js"
+  }
+}

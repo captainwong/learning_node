@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "koa": "^2.14.2"
+  },
+  "devDependencies": {
+    "mocha": "^10.2.0",
+    "supertest": "^6.3.3"
+  },
+  "scripts": {
+    "test": "mocha",
+    "start": "node --use_strict start.js"
+  }
+}
