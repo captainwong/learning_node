@@ -8,6 +8,9 @@ const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const catalogRouter = require('./routes/catalog'); 
 
+const compression = require('compression');
+const helmet = require('helmet');
+
 const app = express();
 
 const mongoose = require('mongoose');
@@ -29,6 +32,14 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    'script-src': ["'self'"]
+  }
+}));
+
+app.use(compression()); // compress all routes
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
