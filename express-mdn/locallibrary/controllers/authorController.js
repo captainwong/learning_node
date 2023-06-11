@@ -90,13 +90,107 @@ exports.author_create_post = [
 ];
 
 // 由 GET 显示删除作者的表单
-exports.author_delete_get = (req, res) => { res.send('未实现：作者删除表单的 GET'); };
+exports.author_delete_get = asyncHandler(async (req, res, next) => {
+    const [author, allBooksByAuthor] = await Promise.all([
+        Author.findById(req.params.id).exec(),
+        Book.find({ author: req.params.id }, 'title summary').exec(),
+    ]);
+    if (author === null) {
+        res.redirect('/catalog/authors');
+        return;
+    }
+
+    res.render('author_delete', {
+        title: 'Delete Author',
+        author: author,
+        author_books: allBooksByAuthor,
+    });
+});
 
 // 由 POST 处理作者删除操作
-exports.author_delete_post = (req, res) => { res.send('未实现：删除作者的 POST'); };
+exports.author_delete_post = asyncHandler(async (req, res, next) => {
+    const [author, allBooksByAuthor] = await Promise.all([
+        Author.findById(req.params.id).exec(),
+        Book.find({ author: req.params.id }, 'title summary').exec(),
+    ]);
+    if (allBooksByAuthor.length > 0) {
+        // author has books, render in same way as for GET route
+        res.render('author_delete', {
+            title: 'Delete Author',
+            author: author,
+            author_books: allBooksByAuthor,
+        });
+        return;
+    } else {
+        await Author.findByIdAndRemove(req.body.authorid);
+        res.redirect('/catalog/authors');
+    }
+});
 
 // 由 GET 显示更新作者的表单
-exports.author_update_get = (req, res) => { res.send('未实现：作者更新表单的 GET'); };
+exports.author_update_get = asyncHandler(async (req, res, next) => { 
+    const author = await Author.findById(req.params.id).exec();
+    if (author === null) {
+        const err = new Error('Author not found');
+        err.status = 404;
+        return next(err);
+    }
+    res.render('author_form', { title: 'Update Author', author: author });
+});
 
 // 由 POST 处理作者更新操作
-exports.author_update_post = (req, res) => { res.send('未实现：更新作者的 POST'); };
+exports.author_update_post = [
+    // validate and sanitize fields
+    body('first_name')
+        .trim()
+        .isLength({ min: 1 })
+        .escape()
+        .withMessage('Firstname must be specified.')
+        .isAlphanumeric()
+        .withMessage('Firstname has non-alphanumeric characters.'),
+    
+    body('family_name')
+        .trim()
+        .isLength({ min: 1 })
+        .escape()
+        .withMessage('Family name must be specified.')
+        .isAlphanumeric()
+        .withMessage('Family name has non-alphanumeric characters.'),
+    
+    body('date_of_birth', 'Invalid date of birth')
+        .optional({ values: 'falsy' })
+        .isISO8601()
+        .toDate(),
+    
+    body('date_of_death', 'Invalid date of death')
+        .optional({ values: 'falsy' })
+        .isISO8601()
+        .toDate(),
+    
+    // process request after validation and sanitization
+    asyncHandler(async (req, res, next) => {
+        const errors = validationResult(req);
+
+        // create Author object with escaped and trimmed data
+        const author = new Author({
+            first_name: req.body.first_name,
+            family_name: req.body.family_name,
+            date_of_birth: req.body.date_of_birth,
+            date_of_death: req.body.date_of_death,
+            _id: req.params.id,
+        });
+
+        if (!errors.isEmpty()) {
+            res.render('author_form', {
+                title: 'Update Author',
+                author: author,
+                errors: errors
+            });
+            return;
+        } else {
+            const theAuthor = await Author.findByIdAndUpdate(req.params.id, author);
+            res.redirect(theAuthor.url);
+        }
+    })
+];
+

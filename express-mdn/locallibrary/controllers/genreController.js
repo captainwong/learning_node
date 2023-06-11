@@ -74,13 +74,82 @@ exports.genre_create_post = [
 ];
 
 // 由 GET 显示删除genre的表单
-exports.genre_delete_get = (req, res) => { res.send('未实现：藏书种类删除表单的 GET'); };
+exports.genre_delete_get = asyncHandler(async (req, res, next) => {
+    const [genre, allBooksByGenre] = await Promise.all([
+        Genre.findById(req.params.id).exec(),
+        Book.find({ genre: req.params.id }, 'title summary').exec(),
+    ]);
+    if (genre === null) {
+        res.redirect('/catalog/genres');
+        return;
+    }
+
+    res.render('genre_delete', {
+        title: 'Delete Genre',
+        genre: genre,
+        genre_books: allBooksByGenre,
+    });
+});
 
 // 由 POST 处理genre删除操作
-exports.genre_delete_post = (req, res) => { res.send('未实现：删除藏书种类的 POST'); };
+exports.genre_delete_post = asyncHandler(async (req, res, next) => {
+    const [genre, allBooksByGenre] = await Promise.all([
+        Genre.findById(req.params.id).exec(),
+        Book.find({ genre: req.params.id }, 'title summary').exec(),
+    ]);
+    if (genre === null) {
+        res.redirect('/catalog/genres');
+        return;
+    }
+
+    if (allBooksByGenre.length > 0) {
+        res.render('genre_delete', {
+            title: 'Delete Genre',
+            genre: genre,
+            genre_books: allBooksByGenre,
+        });
+        return;
+    } else {
+        await Genre.findByIdAndRemove(req.body.genreid);
+        res.redirect('/catalog/genres');
+    }
+});
+
 
 // 由 GET 显示更新genre的表单
-exports.genre_update_get = (req, res) => { res.send('未实现：藏书种类更新表单的 GET'); };
+exports.genre_update_get = asyncHandler(async (req, res, next) => { 
+    const genre = await Genre.findById(req.params.id).exec();
+    if (genre === null) {
+        const err = new Error('Genre not found');
+        err.status = 404;
+        return next(err);
+    }
+    res.render('genre_form', { title: 'Update Genre', genre: genre });
+});
 
 // 由 POST 处理genre更新操作
-exports.genre_update_post = (req, res) => { res.send('未实现：更新genre的 POST'); };
+exports.genre_update_post = [
+    // validate and sanitize the name field
+    body('name', 'Genre name required').trim().isLength({ min: 1 }).escape(),
+
+    // process request after validation and sanitization
+    asyncHandler(async(req, res, next) => {
+        // extract the validation errors from a request
+        const errors = validationResult(req);
+
+        let genre = new Genre({ name: req.body.name, _id: req.params.id });
+
+        if (!errors.isEmpty()) {
+            // there are errors. render the form again with sanitized values/error message.
+            res.render('genre_form', {
+                title: 'Update Genre',
+                genre: genre,
+                errors: errors.array(),
+            });
+            return;
+        } else {            
+            const theGenre = await Genre.findByIdAndUpdate(req.params.id, genre, {});
+            res.redirect(theGenre.url);
+        }
+    }),
+];
