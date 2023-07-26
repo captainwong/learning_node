@@ -1,0 +1,1 @@
+Excercize for `Node.js Design Patterns` 3rd edition by Mario Casciaro, Luciano Mammino.

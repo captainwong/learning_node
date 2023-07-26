@@ -1,0 +1,1 @@
+Code for `Advanced TypeScript Programming Projects` by `Peter O'Hanlon`
