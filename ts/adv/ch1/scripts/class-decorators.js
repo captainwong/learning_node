@@ -27,4 +27,5 @@ let RestrictedClass = class RestrictedClass {
 RestrictedClass = __decorate([
     RoleClass("admin")
 ], RestrictedClass);
+// will throw
 let clazz = new RestrictedClass();
